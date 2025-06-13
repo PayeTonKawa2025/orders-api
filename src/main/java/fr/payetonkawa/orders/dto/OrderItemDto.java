@@ -26,7 +26,7 @@ public class OrderItemDto {
     public static List<OrderItemDto> fromEntities(List<OrderItem> items) {
         return items.stream()
                 .map(OrderItemDto::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
 }

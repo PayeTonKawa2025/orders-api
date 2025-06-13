@@ -4,7 +4,6 @@ import fr.payetonkawa.orders.dto.OrderDto;
 import fr.payetonkawa.orders.entity.Order;
 import fr.payetonkawa.orders.entity.OrderItem;
 import fr.payetonkawa.orders.repository.OrderRepository;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,10 +15,11 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class OrderServiceTest {
+class OrderServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
@@ -30,7 +30,7 @@ public class OrderServiceTest {
     private static final List<Order> ORDERS = new ArrayList<>();
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         ORDERS.clear();
 
         ORDERS.add(buildOrder(1L, "1", 3));
@@ -40,7 +40,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldReturnListOfOrdersDtoWhenGetByClientId() {
+    void shouldReturnListOfOrdersDtoWhenGetByClientId() {
         // Given
         String clientId = "1";
 
@@ -52,11 +52,12 @@ public class OrderServiceTest {
         List<OrderDto> orders = orderService.getByClientId(clientId);
 
         // Then
-        assert orders.size() == 3 : "Expected 3 orders for clientId '1'";
+        assertNotNull(orders, "Returned list should not be null");
+        assertEquals(3, orders.size());
     }
 
     @Test
-    public void shouldReturnListOfOrdersDtoWhenGetByClientIdAndListEmpty() {
+    void shouldReturnListOfOrdersDtoWhenGetByClientIdAndListEmpty() {
         // Given
         String clientId = "2";
 
@@ -67,7 +68,8 @@ public class OrderServiceTest {
         List<OrderDto> orders = orderService.getByClientId(clientId);
 
         // Then
-        assert orders.isEmpty() : "Expected empty list for clientId '2'";
+        assertNotNull(orders, "Returned list should not be null");
+        assertTrue(orders.isEmpty(), "Expected empty list for clientId '2'");
     }
 
     private static Order buildOrder(Long id, String clientId, int numbersOfItems) {
@@ -78,7 +80,7 @@ public class OrderServiceTest {
 
         List<OrderItem> items = new ArrayList<>();
         for (int i = 0; i < numbersOfItems; i++) {
-            items.add(new OrderItem());
+            items.add(buildOrderItem(i));
         }
         order.setItems(items);
 
