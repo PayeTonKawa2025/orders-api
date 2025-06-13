@@ -60,8 +60,10 @@ jobs:
       - name: SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+          HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           mvn verify sonar:sonar \
-            -Dsonar.projectKey=your_project_key \
-            -Dsonar.host.url=https://sonar.yourdomain.com \
+            -Dsonar.projectKey=$PROJECT_KEY \
+            -Dsonar.host.url=$HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
