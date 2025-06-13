@@ -18,7 +18,7 @@ jobs:
           java-version: '21'
 
       - name: Build without tests
-        run: ./mvnw clean install -DskipTests
+        run: mvn clean install -DskipTests
 
   test:
     name: Run Tests
@@ -35,7 +35,7 @@ jobs:
           java-version: '21'
 
       - name: Run Tests
-        run: ./mvnw test
+        run: mvn test
 
   sonarqube:
     name: SonarQube Analysis
@@ -61,7 +61,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          ./mvnw verify sonar:sonar \
+          mvn verify sonar:sonar \
             -Dsonar.projectKey=your_project_key \
             -Dsonar.host.url=https://sonar.yourdomain.com \
             -Dsonar.login=$SONAR_TOKEN
