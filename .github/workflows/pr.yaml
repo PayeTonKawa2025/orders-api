@@ -1,5 +1,4 @@
-name: PR Build, Test & Sonar
-
+name: Pull Request Workflow
 on:
   pull_request:
 
