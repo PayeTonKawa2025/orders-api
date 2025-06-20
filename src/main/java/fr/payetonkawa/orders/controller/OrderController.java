@@ -20,27 +20,18 @@ public class OrderController {
     }
 
     @PostMapping
-    public void createOrder(@RequestBody OrderDto orderDto) {
-        // This method is a placeholder for creating an order.
-        // The actual implementation would involve saving the order to the database
-        // and publishing an event to RabbitMQ.
-        throw new UnsupportedOperationException("Order creation not implemented yet.");
+    public OrderDto createOrder(@RequestBody OrderDto orderDto) {
+        return orderService.create(orderDto);
     }
 
     @PatchMapping("/{orderId}")
-    public void updateOrder(@PathVariable Long orderId, @RequestBody OrderDto orderDto) {
-        // This method is a placeholder for updating an order.
-        // The actual implementation would involve updating the order in the database
-        // and publishing an event to RabbitMQ.
-        throw new UnsupportedOperationException("Order update not implemented yet.");
+    public OrderDto updateOrder(@PathVariable Long orderId, @RequestBody OrderDto orderDto) {
+        return orderService.update(orderId, orderDto);
     }
 
     @DeleteMapping("/{orderId}")
     public void deleteOrder(@PathVariable Long orderId) {
-        // This method is a placeholder for deleting an order.
-        // The actual implementation would involve deleting the order from the database
-        // and publishing an event to RabbitMQ.
-        throw new UnsupportedOperationException("Order deletion not implemented yet.");
+        orderService.delete(orderId);
     }
 
 }

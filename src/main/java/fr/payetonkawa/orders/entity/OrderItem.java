@@ -20,7 +20,7 @@ public class OrderItem {
     @Column(name = "quantity")
     private int quantity = 1;
 
-    @Column(name = "unit_price", nullable = false)
-    private double unitPrice;
+    @Column(name = "unit_price")
+    private Double unitPrice;
 
 }
