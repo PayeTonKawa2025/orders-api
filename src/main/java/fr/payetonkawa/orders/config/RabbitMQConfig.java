@@ -1,5 +1,6 @@
 package fr.payetonkawa.orders.config;
 
+import fr.payetonkawa.common.exchange.ExchangeQueues;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -10,17 +11,14 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String EXCHANGE_NAME = "global.events";
-    public static final String QUEUE_NAME = "service.order.queue";
-
     @Bean
     public TopicExchange eventExchange() {
-        return new TopicExchange(EXCHANGE_NAME);
+        return new TopicExchange(ExchangeQueues.EXCHANGE_NAME);
     }
 
     @Bean
     public Queue orderQueue() {
-        return new Queue(QUEUE_NAME);
+        return new Queue(ExchangeQueues.ORDER_QUEUE_NAME);
     }
 
     @Bean
