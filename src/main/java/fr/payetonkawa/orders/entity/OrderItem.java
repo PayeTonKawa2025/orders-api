@@ -11,7 +11,6 @@ import lombok.Setter;
 public class OrderItem {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
     @Column(name = "item_id", nullable = false)
@@ -22,5 +21,9 @@ public class OrderItem {
 
     @Column(name = "unit_price")
     private Double unitPrice;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private Order order;
 
 }
