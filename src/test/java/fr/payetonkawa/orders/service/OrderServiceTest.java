@@ -4,6 +4,7 @@ import fr.payetonkawa.orders.dto.OrderDto;
 import fr.payetonkawa.orders.dto.OrderItemDto;
 import fr.payetonkawa.orders.entity.Order;
 import fr.payetonkawa.orders.entity.OrderItem;
+import fr.payetonkawa.orders.event.EventPublisher;
 import fr.payetonkawa.orders.exception.MissingDataException;
 import fr.payetonkawa.orders.repository.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,8 @@ class OrderServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
+    @Mock
+    private EventPublisher eventPublisher;
 
     @InjectMocks
     private OrderService orderService;
@@ -173,6 +176,76 @@ class OrderServiceTest {
 
         // Then
         verify(orderRepository, times(1)).deleteById(orderId);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCreateOrderWithNullClientIdButValidItems() {
+        // Given
+        OrderDto orderDto = new OrderDto();
+        orderDto.setClientId(null);
+        OrderItemDto itemDto = new OrderItemDto();
+        itemDto.setItemId("item-1");
+        itemDto.setQuantity(2);
+        itemDto.setUnitPrice(5.0);
+        orderDto.setItems(List.of(itemDto));
+
+        // Then
+        assertThrows(MissingDataException.class, () -> orderService.create(orderDto));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCreateOrderWithValidClientIdButNullItems() {
+        // Given
+        OrderDto orderDto = new OrderDto();
+        orderDto.setClientId("client-1");
+        orderDto.setItems(null);
+
+        // Then
+        assertThrows(MissingDataException.class, () -> orderService.create(orderDto));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUpdateOrderWithNullClientIdButValidItems() {
+        // Given
+        Long orderId = 1L;
+        Order existingOrder = buildOrder(orderId, "client-1", 1);
+        when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(existingOrder));
+
+        OrderDto orderDto = new OrderDto();
+        orderDto.setClientId(null);
+        OrderItemDto itemDto = new OrderItemDto();
+        itemDto.setItemId("item-1");
+        itemDto.setQuantity(2);
+        itemDto.setUnitPrice(5.0);
+        orderDto.setItems(List.of(itemDto));
+
+        // Then
+        assertThrows(MissingDataException.class, () -> orderService.update(orderId, orderDto));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUpdateOrderWithValidClientIdButNullItems() {
+        // Given
+        Long orderId = 1L;
+        Order existingOrder = buildOrder(orderId, "client-1", 1);
+        when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(existingOrder));
+
+        OrderDto orderDto = new OrderDto();
+        orderDto.setClientId("client-1");
+        orderDto.setItems(null);
+
+        // Then
+        assertThrows(MissingDataException.class, () -> orderService.update(orderId, orderDto));
+    }
+
+    @Test
+    void shouldDeleteNonExistentOrderWithoutException() {
+        // Given
+        Long nonExistentOrderId = 999L;
+
+        // When & Then
+        assertDoesNotThrow(() -> orderService.delete(nonExistentOrderId));
+        verify(orderRepository, times(1)).deleteById(nonExistentOrderId);
     }
 
     private static Order buildOrder(Long id, String clientId, int numbersOfItems) {

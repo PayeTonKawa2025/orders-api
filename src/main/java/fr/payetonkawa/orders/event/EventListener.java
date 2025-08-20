@@ -25,6 +25,10 @@ public class EventListener {
     public void handleEvent(String message, Message amqpMessage) {
         String routingKey = amqpMessage.getMessageProperties().getReceivedRoutingKey();
         ExchangeMessage exchangeMessage = gson.fromJson(message, ExchangeMessage.class);
+        if (exchangeMessage == null || exchangeMessage.getPayload() == null) {
+            log.warn("Received empty or invalid message: {}", message);
+            return;
+        }
         log.info("Received event with routing key: {} from queue: {}", routingKey, ORDER_QUEUE_NAME);
 
         if (exchangeMessage.getRoutingKey().equalsIgnoreCase("product.price.updated")) {
