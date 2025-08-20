@@ -26,7 +26,7 @@ public class RabbitMQConfig {
         return BindingBuilder
                 .bind(orderQueue)
                 .to(exchange)
-                .with("order.*");
+                .with("#");
     }
 
 }
