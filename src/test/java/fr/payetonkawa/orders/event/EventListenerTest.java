@@ -1,8 +1,9 @@
 package fr.payetonkawa.orders.event;
 
-import com.google.gson.Gson;
-import fr.payetonkawa.common.exchange.ExchangeMessage;
-import fr.payetonkawa.orders.service.OrderService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.payetonkawa.orders.entity.Order;
+import fr.payetonkawa.orders.messaging.ExchangeMessage;
+import fr.payetonkawa.orders.repository.OrderRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,6 +13,7 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
@@ -20,70 +22,96 @@ import static org.mockito.Mockito.*;
 class EventListenerTest {
 
     @Mock
-    private OrderService orderService;
+    private OrderRepository orderRepository;
 
     @InjectMocks
     private EventListener eventListener;
 
-    private final Gson gson = new Gson();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void shouldHandleOtherEventWithoutCallingUpdateProduct() {
+    void shouldUpdateOrderStatusToConfirmed() throws Exception {
         // Given
+        Order mockOrder = new Order();
+        mockOrder.setStatus("PENDING");
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(mockOrder));
+
         ExchangeMessage exchangeMessage = ExchangeMessage.builder()
-                .routingKey("other.event")
-                .payload(Map.of("data", "test"))
+                .payload(Map.of("orderId", 1L))
                 .build();
 
-        String jsonMessage = gson.toJson(exchangeMessage);
-        Message amqpMessage = mock(Message.class);
-        MessageProperties messageProperties = mock(MessageProperties.class);
+        String jsonMessage = objectMapper.writeValueAsString(exchangeMessage);
 
-        when(amqpMessage.getMessageProperties()).thenReturn(messageProperties);
-        when(messageProperties.getReceivedRoutingKey()).thenReturn("other.event");
+        Message amqpMessage = mock(Message.class);
+        MessageProperties props = mock(MessageProperties.class);
+        when(amqpMessage.getMessageProperties()).thenReturn(props);
+        when(props.getReceivedRoutingKey()).thenReturn("product.stock.confirmed");
 
         // When
         eventListener.handleEvent(jsonMessage, amqpMessage);
 
         // Then
-        verify(orderService, never()).updateProduct(any(), anyDouble());
+        verify(orderRepository).save(mockOrder);
+        assert mockOrder.getStatus().equals("CONFIRMED");
     }
 
     @Test
-    void shouldThrowExceptionWhenInvalidJsonMessage() {
+    void shouldUpdateOrderStatusToFailed() throws Exception {
         // Given
-        String invalidJsonMessage = "invalid json";
-        Message amqpMessage = mock(Message.class);
-        MessageProperties messageProperties = mock(MessageProperties.class);
+        Order mockOrder = new Order();
+        mockOrder.setStatus("PENDING");
+        when(orderRepository.findById(2L)).thenReturn(Optional.of(mockOrder));
 
-        when(amqpMessage.getMessageProperties()).thenReturn(messageProperties);
-        when(messageProperties.getReceivedRoutingKey()).thenReturn("test.routing.key");
-
-        // When & Then
-        assertThrows(com.google.gson.JsonSyntaxException.class,
-                () -> eventListener.handleEvent(invalidJsonMessage, amqpMessage));
-        verify(orderService, never()).updateProduct(any(), anyDouble());
-    }
-
-    @Test
-    void shouldHandleEmptyPayloadMessage() {
-        // Given
         ExchangeMessage exchangeMessage = ExchangeMessage.builder()
-                .routingKey("product.price.updated")
-                .payload(null)
+                .payload(Map.of("orderId", 2L))
                 .build();
 
-        String jsonMessage = gson.toJson(exchangeMessage);
-        Message amqpMessage = mock(Message.class);
-        MessageProperties messageProperties = mock(MessageProperties.class);
+        String jsonMessage = objectMapper.writeValueAsString(exchangeMessage);
 
-        when(amqpMessage.getMessageProperties()).thenReturn(messageProperties);
-        when(messageProperties.getReceivedRoutingKey()).thenReturn("product.price.updated");
+        Message amqpMessage = mock(Message.class);
+        MessageProperties props = mock(MessageProperties.class);
+        when(amqpMessage.getMessageProperties()).thenReturn(props);
+        when(props.getReceivedRoutingKey()).thenReturn("product.stock.insufficient");
 
         // When
         eventListener.handleEvent(jsonMessage, amqpMessage);
 
         // Then
-        verify(orderService, never()).updateProduct(any(), anyDouble());
+        verify(orderRepository).save(mockOrder);
+        assert mockOrder.getStatus().equals("FAILED");
+    }
+
+    @Test
+    void shouldHandleUnknownRoutingKeyWithoutSaving() throws Exception {
+        // Given
+        ExchangeMessage exchangeMessage = ExchangeMessage.builder()
+                .payload(Map.of("orderId", 999L))
+                .build();
+
+        String jsonMessage = objectMapper.writeValueAsString(exchangeMessage);
+
+        Message amqpMessage = mock(Message.class);
+        MessageProperties props = mock(MessageProperties.class);
+        when(amqpMessage.getMessageProperties()).thenReturn(props);
+        when(props.getReceivedRoutingKey()).thenReturn("unknown.event");
+
+        // When
+        eventListener.handleEvent(jsonMessage, amqpMessage);
+
+        // Then
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowExceptionOnMalformedJson() {
+        // Given
+        String badJson = "not a json";
+        Message amqpMessage = mock(Message.class);
+        MessageProperties props = mock(MessageProperties.class);
+        when(amqpMessage.getMessageProperties()).thenReturn(props);
+        when(props.getReceivedRoutingKey()).thenReturn("product.stock.confirmed");
+
+        // Then
+        assertThrows(Exception.class, () -> eventListener.handleEvent(badJson, amqpMessage));
     }
 }

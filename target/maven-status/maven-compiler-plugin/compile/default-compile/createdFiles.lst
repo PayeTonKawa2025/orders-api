@@ -1,0 +1,17 @@
+fr\payetonkawa\orders\entity\OrderItem.class
+fr\payetonkawa\orders\event\EventListener$1.class
+fr\payetonkawa\orders\config\RabbitMQConfig.class
+fr\payetonkawa\orders\entity\Order.class
+fr\payetonkawa\orders\OrdersApplication.class
+fr\payetonkawa\orders\event\EventListener.class
+fr\payetonkawa\orders\repository\OrderItemRepository.class
+fr\payetonkawa\orders\dto\OrderDto.class
+fr\payetonkawa\orders\messaging\ExchangeMessage.class
+fr\payetonkawa\orders\event\EventPublisher.class
+fr\payetonkawa\orders\exception\MissingDataException.class
+fr\payetonkawa\orders\controller\OrderController.class
+fr\payetonkawa\orders\messaging\ExchangeQueues.class
+fr\payetonkawa\orders\service\OrderService.class
+fr\payetonkawa\orders\repository\OrderRepository.class
+fr\payetonkawa\orders\dto\OrderItemDto.class
+fr\payetonkawa\orders\messaging\ExchangeMessage$ExchangeMessageBuilder.class
