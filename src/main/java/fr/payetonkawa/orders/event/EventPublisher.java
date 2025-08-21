@@ -1,29 +1,29 @@
 package fr.payetonkawa.orders.event;
 
 import com.google.gson.Gson;
-import fr.payetonkawa.orders.config.RabbitMQConfig;
-import lombok.AllArgsConstructor;
+import fr.payetonkawa.orders.messaging.ExchangeMessage;
+import fr.payetonkawa.orders.messaging.ExchangeQueues;
 import org.springframework.amqp.core.AmqpTemplate;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import static fr.payetonkawa.common.exchange.ExchangeQueues.EXCHANGE_NAME;
-
+@Slf4j
 @Service
 public class EventPublisher {
 
     private final AmqpTemplate amqpTemplate;
-
-    public static final String ROUTING_KEY_ORDER_CREATED = "order.created";
-    public static final String ROUTING_KEY_ORDER_UPDATED = "order.updated";
-    public static final String ROUTING_KEY_ORDER_DELETED = "order.deleted";
-
-    private static final Gson gson = new Gson();
+    private final Gson gson = new Gson();
 
     public EventPublisher(AmqpTemplate amqpTemplate) {
         this.amqpTemplate = amqpTemplate;
     }
 
-    public void sendEvent(String routingKey, Object payload) {
-        amqpTemplate.convertAndSend(EXCHANGE_NAME, routingKey, gson.toJson(payload));
+    public void sendEvent(String routingKey, ExchangeMessage message) {
+        message.setExchangeId(ExchangeQueues.EXCHANGE_NAME);
+        message.setRoutingKey(routingKey);
+        message.setType(routingKey);
+        amqpTemplate.convertAndSend(ExchangeQueues.EXCHANGE_NAME, routingKey, gson.toJson(message));
+        log.info("📤 Publishing to exchange '{}' with routingKey '{}' and payload '{}'",
+                ExchangeQueues.EXCHANGE_NAME, routingKey, gson.toJson(message));
     }
 }

@@ -11,6 +11,7 @@ public class OrderDto {
     private Long id;
     private String clientId;
     private Long createdAt;
+    private String status;
     private List<OrderItemDto> items;
 
     public static OrderDto fromEntity(Order order) {
@@ -18,6 +19,7 @@ public class OrderDto {
         dto.setId(order.getId());
         dto.setClientId(order.getClientId());
         dto.setCreatedAt(order.getCreatedAt().getTime());
+        dto.setStatus(order.getStatus());
         dto.setItems(OrderItemDto.fromEntities(order.getItems()));
         return dto;
     }
