@@ -24,16 +24,12 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final EventPublisher eventPublisher;
 
-    /**
-     * Retrieve all orders of a given client
-     */
     public List<OrderDto> getByClientId(String clientId) {
         return OrderDto.fromEntities(orderRepository.findAllByClientId(clientId));
     }
 
-    /**
-     * Create a new order and publish "order.created"
-     */
+
+    /** Create order + publish order.created */
     public OrderDto create(OrderDto orderDto) {
         validateOrderInputForCreate(orderDto);
 
@@ -49,32 +45,27 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
 
         List<Map<String, Object>> itemPayload = mapItemsToPayload(savedOrder.getItems());
-
-        Map<String, Object> eventPayload = Map.of(
+        Map<String, Object> payload = Map.of(
                 "orderId", savedOrder.getId(),
                 "clientId", savedOrder.getClientId(),
                 "items", itemPayload
         );
 
         eventPublisher.sendEvent("order.created", ExchangeMessage.builder()
-                .payload(eventPayload)
+                .payload(payload)
                 .build());
 
         return OrderDto.fromEntity(savedOrder);
     }
 
-    /**
-     * Update an existing order:
-     *  - if status is set to CANCELLED (and wasn't before): publish "order.cancelled" (restock) and keep order
-     *  - else update items and publish "order.updated" (delta stock will be handled by products)
-     */
+
     public OrderDto update(Long orderId, OrderDto orderDto) {
         Order existingOrder = orderRepository.findById(orderId)
                 .orElseThrow(() -> new MissingDataException("Order not found"));
 
         String previousStatus = existingOrder.getStatus();
 
-        // 1) Gestion de l'annulation (ne nécessite pas les items)
+        // 1) Cancellation does NOT require items
         if (isCancellationRequest(orderDto) && !"CANCELLED".equalsIgnoreCase(previousStatus)) {
             existingOrder.setStatus("CANCELLED");
             Order saved = orderRepository.save(existingOrder);
@@ -92,19 +83,17 @@ public class OrderService {
             return OrderDto.fromEntity(saved);
         }
 
-        // 2) Mise à jour "classique" des items
+        // 2) Classic update requires clientId + items
         validateOrderInputForUpdate(orderDto);
 
         List<Map<String, Object>> previousItems = mapItemsToPayload(existingOrder.getItems());
 
+        // clientId is required (test expectation)
+        existingOrder.setClientId(orderDto.getClientId());
+
         List<OrderItem> newItems = orderDto.getItems().stream()
                 .map(OrderItemDto::toEntity)
                 .collect(Collectors.toList());
-
-        // (optionnel) MAJ du client si on veut autoriser le changement
-        if (orderDto.getClientId() != null) {
-            existingOrder.setClientId(orderDto.getClientId());
-        }
         existingOrder.setItems(newItems);
 
         Order updatedOrder = orderRepository.save(existingOrder);
@@ -123,13 +112,14 @@ public class OrderService {
         return OrderDto.fromEntity(updatedOrder);
     }
 
-    /**
-     * Delete an order and publish "order.deleted"
-     */
+    /** Delete order (idempotent) + publish order.deleted */
     public void delete(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new MissingDataException("Order not found"));
+        Optional<Order> opt = orderRepository.findById(id);
+        if (opt.isEmpty()) {
+            return;
+        }
 
+        Order order = opt.get();
         List<Map<String, Object>> itemPayload = mapItemsToPayload(order.getItems());
 
         orderRepository.deleteById(id);
@@ -142,9 +132,7 @@ public class OrderService {
                 .build());
     }
 
-    /**
-     * Update unit price of all order items for a specific product
-     */
+    /** Propagate price update to existing order items of a given product */
     public void updateProduct(Long productId, double newPrice) {
         List<OrderItem> items = orderItemRepository.findByItemId(productId.toString());
         for (OrderItem item : items) {
@@ -153,7 +141,7 @@ public class OrderService {
         }
     }
 
-    /*** === Validations === ***/
+
     private void validateOrderInputForCreate(OrderDto orderDto) {
         if (orderDto.getClientId() == null || orderDto.getItems() == null || orderDto.getItems().isEmpty()) {
             throw new MissingDataException("Client ID and items must be provided");
@@ -161,7 +149,10 @@ public class OrderService {
     }
 
     private void validateOrderInputForUpdate(OrderDto orderDto) {
-        // pour update classique, items requis
+        // tests expect clientId to be required on update
+        if (orderDto.getClientId() == null) {
+            throw new MissingDataException("Client ID must be provided");
+        }
         if (orderDto.getItems() == null || orderDto.getItems().isEmpty()) {
             throw new MissingDataException("Items cannot be null when updating an order");
         }
@@ -171,10 +162,8 @@ public class OrderService {
         return orderDto.getStatus() != null && "CANCELLED".equalsIgnoreCase(orderDto.getStatus());
     }
 
-    /**
-     * Convert list of OrderItems to List<Map<String, Object>> for event payload
-     */
     private List<Map<String, Object>> mapItemsToPayload(List<OrderItem> items) {
+        if (items == null) return List.of();
         return items.stream().map(item -> {
             Map<String, Object> map = new HashMap<>();
             map.put("itemId", item.getItemId());

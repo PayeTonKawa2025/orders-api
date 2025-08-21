@@ -1,0 +1,34 @@
+-------------------------------------------------------------------------------
+Test set: fr.payetonkawa.orders.service.OrderServiceTest
+-------------------------------------------------------------------------------
+Tests run: 13, Failures: 2, Errors: 0, Skipped: 0, Time elapsed: 0.192 s <<< FAILURE! -- in fr.payetonkawa.orders.service.OrderServiceTest
+fr.payetonkawa.orders.service.OrderServiceTest.shouldDeleteOrder -- Time elapsed: 0.039 s <<< FAILURE!
+Wanted but not invoked:
+orderRepository.deleteById(1L);
+-> at fr.payetonkawa.orders.service.OrderServiceTest.shouldDeleteOrder(OrderServiceTest.java:178)
+
+However, there was exactly 1 interaction with this mock:
+orderRepository.findById(1L);
+-> at fr.payetonkawa.orders.service.OrderService.delete(OrderService.java:117)
+
+
+	at fr.payetonkawa.orders.service.OrderServiceTest.shouldDeleteOrder(OrderServiceTest.java:178)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+fr.payetonkawa.orders.service.OrderServiceTest.shouldDeleteNonExistentOrderWithoutException -- Time elapsed: 0.008 s <<< FAILURE!
+Wanted but not invoked:
+orderRepository.deleteById(999L);
+-> at fr.payetonkawa.orders.service.OrderServiceTest.shouldDeleteNonExistentOrderWithoutException(OrderServiceTest.java:248)
+
+However, there was exactly 1 interaction with this mock:
+orderRepository.findById(999L);
+-> at fr.payetonkawa.orders.service.OrderService.delete(OrderService.java:117)
+
+
+	at fr.payetonkawa.orders.service.OrderServiceTest.shouldDeleteNonExistentOrderWithoutException(OrderServiceTest.java:248)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
