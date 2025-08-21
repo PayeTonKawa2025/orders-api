@@ -28,8 +28,6 @@ public class OrderService {
         return OrderDto.fromEntities(orderRepository.findAllByClientId(clientId));
     }
 
-
-    /** Create order + publish order.created */
     public OrderDto create(OrderDto orderDto) {
         validateOrderInputForCreate(orderDto);
 
