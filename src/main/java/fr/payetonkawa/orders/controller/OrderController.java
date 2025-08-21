@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/v1")
 @AllArgsConstructor
 @Tag(name = "Orders", description = "Operations related to orders")
 public class OrderController {
