@@ -65,7 +65,6 @@ public class OrderService {
 
         String previousStatus = existingOrder.getStatus();
 
-        // 1) Cancellation does NOT require items
         if (isCancellationRequest(orderDto) && !"CANCELLED".equalsIgnoreCase(previousStatus)) {
             existingOrder.setStatus("CANCELLED");
             Order saved = orderRepository.save(existingOrder);
@@ -83,14 +82,12 @@ public class OrderService {
             return OrderDto.fromEntity(saved);
         }
 
-        // 2) Classic update requires clientId + items
+
         validateOrderInputForUpdate(orderDto);
 
         List<Map<String, Object>> previousItems = mapItemsToPayload(existingOrder.getItems());
 
-        // clientId is required (test expectation)
-        existingOrder.setClientId(orderDto.getClientId());
-
+        existingOrder.setClientId(orderDto.getClientId()); // clientId is required
         List<OrderItem> newItems = orderDto.getItems().stream()
                 .map(OrderItemDto::toEntity)
                 .collect(Collectors.toList());
@@ -112,32 +109,27 @@ public class OrderService {
         return OrderDto.fromEntity(updatedOrder);
     }
 
-    /** Delete order (idempotent) + publish order.deleted */
+    /** Delete order (idempotent) + publish order.deleted only if it existed */
     public void delete(Long id) {
         Optional<Order> opt = orderRepository.findById(id);
-        if (opt.isEmpty()) {
-            return;
-        }
 
-        Order order = opt.get();
-        List<Map<String, Object>> itemPayload = mapItemsToPayload(order.getItems());
+        boolean existed = opt.isPresent();
+        boolean wasCancelled = existed && "CANCELLED".equalsIgnoreCase(opt.get().getStatus());
+
+        // on capture le payload uniquement si on DOIT publier
+        List<Map<String, Object>> itemPayload = (!wasCancelled && existed)
+                ? mapItemsToPayload(opt.get().getItems())
+                : null;
 
         orderRepository.deleteById(id);
 
-        eventPublisher.sendEvent("order.deleted", ExchangeMessage.builder()
-                .payload(Map.of(
-                        "orderId", id,
-                        "items", itemPayload
-                ))
-                .build());
-    }
-
-    /** Propagate price update to existing order items of a given product */
-    public void updateProduct(Long productId, double newPrice) {
-        List<OrderItem> items = orderItemRepository.findByItemId(productId.toString());
-        for (OrderItem item : items) {
-            item.setUnitPrice(newPrice);
-            orderItemRepository.save(item);
+        if (itemPayload != null) {
+            eventPublisher.sendEvent("order.deleted", ExchangeMessage.builder()
+                    .payload(Map.of(
+                            "orderId", id,
+                            "items", itemPayload
+                    ))
+                    .build());
         }
     }
 
@@ -149,7 +141,6 @@ public class OrderService {
     }
 
     private void validateOrderInputForUpdate(OrderDto orderDto) {
-        // tests expect clientId to be required on update
         if (orderDto.getClientId() == null) {
             throw new MissingDataException("Client ID must be provided");
         }
@@ -161,6 +152,7 @@ public class OrderService {
     private boolean isCancellationRequest(OrderDto orderDto) {
         return orderDto.getStatus() != null && "CANCELLED".equalsIgnoreCase(orderDto.getStatus());
     }
+
 
     private List<Map<String, Object>> mapItemsToPayload(List<OrderItem> items) {
         if (items == null) return List.of();
