@@ -1,0 +1,136 @@
+{
+	"info": {
+		"_postman_id": "563af9d6-519b-4296-9b68-d1f362000c44",
+		"name": "Orders-Api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21278304"
+	},
+	"item": [
+		{
+			"name": "Get list of orders by client",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{HOST}}/{{CLIENTID}}",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"{{CLIENTID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create new order",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"clientId\": \"{{CLIENTID}}\",\r\n    \"items\": [\r\n        {\r\n            \"itemId\": \"123\",\r\n            \"unitPrice\": \"1\"\r\n        },\r\n        {\r\n            \"itemId\": \"456\",\r\n            \"unitPrice\": \"2\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{HOST}}",
+					"host": [
+						"{{HOST}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Patch order id",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"clientId\": \"1\",\r\n    \"items\": []\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{HOST}}/{{ORDERID}}",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"{{ORDERID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"clientId\": \"1\",\r\n    \"items\": []\r\n}"
+				},
+				"url": {
+					"raw": "{{HOST}}/{{ORDERID}}",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"{{ORDERID}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "HOST",
+			"value": "http://localhost:8080/v1",
+			"type": "string"
+		},
+		{
+			"key": "CLIENTID",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "ORDERID",
+			"value": "1",
+			"type": "string"
+		}
+	]
+}
